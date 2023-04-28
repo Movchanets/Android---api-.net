@@ -3,6 +3,7 @@ package com.example.sim.dto.category;
 public class CategoryItemDTO {
     private int id;
     private String name;
+
     private String image;
 
     public int getId() {

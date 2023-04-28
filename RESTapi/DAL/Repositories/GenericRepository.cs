@@ -21,7 +21,7 @@ namespace DAL.Repositories
             _dbContext = context;
         }
 
-
+        
         public async Task<TEntity?> GetByName(string name)
         {
             return await _dbContext.Set<TEntity>()

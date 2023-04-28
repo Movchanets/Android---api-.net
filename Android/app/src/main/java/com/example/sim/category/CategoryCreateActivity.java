@@ -1,147 +1,239 @@
 package com.example.sim.category;
 
-import static com.oginotihiro.cropview.Crop.REQUEST_PICK;
-
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Base64;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.example.sim.BaseActivity;
+import com.example.sim.ChangeImageActivity;
 import com.example.sim.MainActivity;
 import com.example.sim.R;
-import com.oginotihiro.cropview.CropUtil;
-import com.oginotihiro.cropview.CropView;
+import com.example.sim.dto.category.CategoryCreateDTO;
+import com.example.sim.service.CategoryNetwork;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
-public class CategoryCreateActivity extends BaseActivity implements View.OnClickListener  {
-    private CropView cropView;
-    private ImageView resultIv;
-    private LinearLayout btnlay;
-    private Button doneBtn;
-    private Button cancelBtn;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
-    private Bitmap croppedBitmap;
+public class CategoryCreateActivity extends BaseActivity {
+
+    private static int SELECT_IMAGE_RESULT=300;
+    Uri uri = null;
+    ImageView IVPreviewImage;
+    TextInputEditText txtCategoryName;
+    TextInputEditText txtCategoryPriority;
+    TextInputEditText txtCategoryDescription;
+    TextInputLayout tfCategoryNameLayout;
+    TextInputLayout tfCategoryPriorityLayout;
+    TextInputLayout tfCategoryDescriptionLayout;
+    TextView tfPhoto;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_category_create);
-        cropView = (CropView) findViewById(R.id.cropView);
-        resultIv = (ImageView) findViewById(R.id.resultIv);
-        btnlay = (LinearLayout) findViewById(R.id.btnlay);
-        doneBtn = (Button) findViewById(R.id.doneBtn);
-        cancelBtn = (Button) findViewById(R.id.cancelBtn);
-
-        doneBtn.setOnClickListener(this);
-        cancelBtn.setOnClickListener(this);
+        IVPreviewImage=findViewById(R.id.IVPreviewImage);
+        txtCategoryName=findViewById(R.id.txtCategoryName);
+        tfCategoryNameLayout = findViewById(R.id.tfCategoryName);
+        tfCategoryPriorityLayout = findViewById(R.id.tfCategoryPriority);
+        tfCategoryDescriptionLayout = findViewById(R.id.tfCategoryDescription);
+        txtCategoryPriority=findViewById(R.id.txtCategoryPriority);
+        txtCategoryDescription=findViewById(R.id.txtCategoryDescription);
+        tfPhoto = findViewById(R.id.tfPhoto);
+        validationName(txtCategoryName);
+        validationPriority(txtCategoryPriority);
+        validationDescription(txtCategoryDescription);
     }
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.create_menu, menu);
-        return true;
+    private  boolean validation()
+    {
+        boolean isValid = true;
+        String categoryName = txtCategoryName.getText().toString();
+        String categoryPriority = txtCategoryPriority.getText().toString();
+        String categoryDescription = txtCategoryDescription.getText().toString();
+        if(categoryName.isEmpty())
+        {
+            tfCategoryNameLayout.setError("Введіть назву категорії");
+            isValid = false;
+        }
+        else
+        {
+            tfCategoryNameLayout.setError(null);
+        }
+        if(categoryPriority.isEmpty() || Integer.parseInt(categoryPriority) < 0)
+        {
+            tfCategoryPriorityLayout.setError("Введіть пріоритет категорії");
+            isValid = false;
+        }
+        else
+        {
+            tfCategoryPriorityLayout.setError(null);
+        }
+        if(categoryDescription.isEmpty())
+        {
+            tfCategoryDescriptionLayout.setError("Введіть опис категорії");
+            isValid = false;
+        }
+        else
+        {
+            tfCategoryDescriptionLayout.setError(null);
+        }
+        if(uri == null)
+        {
+            tfPhoto.setError("Виберіть фото");
+            isValid = false;
+        }
+        else
+        {
+            tfPhoto.setError(null);
+        }
+        return isValid;
     }
+    private String uriGetBase64(Uri uri) {
+        try {
+            Bitmap bitmap=null;
+            try {
+                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+            byte[] byteArr = bytes.toByteArray();
+            return Base64.encodeToString(byteArr, Base64.DEFAULT);
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_pick:
-                reset();
-
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT).setType("image/*");
-                startActivityForResult(intent, REQUEST_PICK);
-                return true;
-            case R.id.m_home:
-                try {
-
-                    intent = new Intent(this, MainActivity.class);
-                    startActivity(intent);
-                    finish();
-                }catch (Exception e) {
-                    System.out.println(e.getMessage());
-                }
-                return true;
-            case R.id.m_create:
-                try {
-
-                    intent = new Intent(this, CategoryCreateActivity.class);
-                    startActivity(intent);
-                    finish();
-                }catch (Exception e) {
-                    System.out.println(e.getMessage());
-                }
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        } catch(Exception ex) {
+            return null;
         }
     }
-
-    @SuppressLint("MissingSuperCall")
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK && requestCode == REQUEST_PICK) {
-            Uri source = data.getData();
-
-            cropView.setVisibility(View.VISIBLE);
-            btnlay.setVisibility(View.VISIBLE);
-
-            cropView.of(source).asSquare().initialize(CategoryCreateActivity.this);
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode,data);
+        if (requestCode == SELECT_IMAGE_RESULT) {
+            uri = (Uri) data.getParcelableExtra("croppedUri");
+            IVPreviewImage.setImageURI(uri);
         }
     }
+    private void validationName(TextInputEditText input) {
+        input.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
-    @Override
-    public void onClick(View v) {
-        int id = v.getId();
-        if (id == R.id.doneBtn) {
-            final ProgressDialog dialog = ProgressDialog.show(CategoryCreateActivity.this, null, "Please wait…", true, false);
+            }
 
-            cropView.setVisibility(View.GONE);
-            btnlay.setVisibility(View.GONE);
-            resultIv.setVisibility(View.VISIBLE);
-
-            new Thread() {
-                public void run() {
-                    croppedBitmap = cropView.getOutput();
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            resultIv.setImageBitmap(croppedBitmap);
-                        }
-                    });
-
-                    Uri destination = Uri.fromFile(new File(getCacheDir(), "cropped"));
-                    CropUtil.saveOutput(CategoryCreateActivity.this, destination, croppedBitmap, 90);
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            dialog.dismiss();
-                        }
-                    });
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                String name = txtCategoryName.getText().toString();
+                if(name.isEmpty()) {
+                    tfCategoryNameLayout.setError("Вкажіть назву категорії");
                 }
-            }.start();
-        } else if (id == R.id.cancelBtn) {
-            reset();
+                else {
+                    tfCategoryNameLayout.setError("");
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+    }
+    private void validationPriority(TextInputEditText input) {
+        input.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                String name = txtCategoryPriority.getText().toString();
+                if(name.isEmpty()) {
+                    tfCategoryPriorityLayout.setError("Вкажіть пріоритет категорії");
+                }
+                else {
+                    tfCategoryPriorityLayout.setError("");
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+    }
+    private void validationDescription(TextInputEditText input) {
+        input.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                String description = txtCategoryDescription.getText().toString();
+                if(description.isEmpty()) {
+                    tfCategoryDescriptionLayout.setError("Вкажіть опис категорії");
+                }
+                else {
+                    tfCategoryDescriptionLayout.setError("");
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+    }
+    //Додавання категорії - відправка на сервер даних
+    public void onClickCreateCategory(View view) {
+        if(!validation())
+        {
+            return;
         }
+        CategoryCreateDTO model = new CategoryCreateDTO();
+        model.setName(txtCategoryName.getText().toString());
+        model.setPriority(Integer.parseInt(txtCategoryPriority.getText().toString()));
+        model.setDescription(txtCategoryDescription.getText().toString());
+        model.setImageBase64(uriGetBase64(uri));
+        CategoryNetwork.getInstance()
+                .getJsonApi()
+                .create(model)
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                        Intent intent = new Intent(CategoryCreateActivity.this, MainActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+
+                    }
+                });
     }
 
-    private void reset() {
-        cropView.setVisibility(View.GONE);
-        resultIv.setVisibility(View.GONE);
-        btnlay.setVisibility(View.GONE);
-        resultIv.setImageBitmap(null);
+    //Вибір фото і її обрізання
+    public void onClickSelectImagePig(View view) {
+        Intent intent = new Intent(this, ChangeImageActivity.class);
+        startActivityForResult(intent, SELECT_IMAGE_RESULT);
     }
+
 }

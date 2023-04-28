@@ -23,6 +23,20 @@ public class CategoryController :ControllerBase
         await _categoryService.Create(model);
         return Ok();
     }
+    [HttpDelete]
+    [Route("Delete")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        await _categoryService.Delete(id);
+        return Ok();
+    }
+    [HttpPut]
+    [Route("Update")]
+    public async Task<IActionResult> Update(UpdateCategoryVm model)
+    {
+        await _categoryService.Update(model);
+        return Ok();
+    }
     [HttpGet]
     [Route("GetAll")]
     public async Task<IActionResult> GetAllAsync()

@@ -12,7 +12,7 @@ import com.example.sim.R;
 public class CategoryCardViewHolder extends RecyclerView.ViewHolder {
     private ImageView categoryImage;
     private TextView categoryName;
-
+    private int id;
 
     public CategoryCardViewHolder(@NonNull View itemView) {
         super(itemView);
@@ -20,6 +20,12 @@ public class CategoryCardViewHolder extends RecyclerView.ViewHolder {
         categoryImage=itemView.findViewById(R.id.categoryImage);
     }
 
+    public int getId() {
+        return id;
+    }
+    public void setId(int id) {
+        this.id = id;
+    }
     public ImageView getCategoryImage() {
         return categoryImage;
     }
