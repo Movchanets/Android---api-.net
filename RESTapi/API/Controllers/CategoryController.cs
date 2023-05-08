@@ -4,43 +4,55 @@ using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace RESTapi.Controllers;
-[ApiController]
-[Route("[controller]")]
 
-public class CategoryController :ControllerBase
+[ApiController]
+[Route("api/[controller]")]
+public class CategoriesController : ControllerBase
 {
     private readonly IMapper _mapper;
     private readonly ICategoryService _categoryService;
-    public CategoryController(ICategoryService categoryService, IMapper mapper)
+
+    public CategoriesController(ICategoryService categoryService, IMapper mapper)
     {
         _categoryService = categoryService;
         _mapper = mapper;
     }
-    [HttpPost]
-    [Route("Create")]
-    public async Task<IActionResult> Create(CreateCategoryVm model)
+
+    [HttpPost("create")]
+    public async Task<IActionResult> Create([FromBody] CreateCategoryVm model)
     {
         await _categoryService.Create(model);
         return Ok();
     }
-    [HttpDelete]
-    [Route("Delete")]
+
+    [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         await _categoryService.Delete(id);
         return Ok();
     }
-    [HttpPut]
-    [Route("Update")]
-    public async Task<IActionResult> Update(UpdateCategoryVm model)
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var category = await _categoryService.GetById(id);
+        if (category is null)
+            return NotFound();
+
+        return Ok(_mapper.Map<CategoryItemVm>(category));
+    }
+
+    [HttpPut("update")]
+    public async Task<IActionResult> Update([FromBody] UpdateCategoryVm model)
     {
         await _categoryService.Update(model);
         return Ok();
     }
-    [HttpGet]
-    [Route("GetAll")]
+
+    [HttpGet("list")]
     public async Task<IActionResult> GetAllAsync()
     {
+        Thread.Sleep(1000);
         return Ok(await _categoryService.GetAllAsync());
     }
 }

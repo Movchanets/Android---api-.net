@@ -29,4 +29,6 @@ public class CategoryItemDTO {
     public void setImage(String image) {
         this.image = image;
     }
+
+
 }

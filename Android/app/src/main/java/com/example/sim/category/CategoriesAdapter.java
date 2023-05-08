@@ -16,14 +16,20 @@ import com.example.sim.dto.category.CategoryItemDTO;
 
 import java.util.List;
 
+import kotlinx.coroutines.channels.ActorKt;
+
 public class CategoriesAdapter extends RecyclerView.Adapter<CategoryCardViewHolder> {
 
     private List<CategoryItemDTO> categories;
+    private OnItemClickListener deleteListener;
+    private OnItemClickListener updateListener;
 
-    public CategoriesAdapter(List<CategoryItemDTO> categories) {
+   public CategoriesAdapter(List<CategoryItemDTO> categories, OnItemClickListener deleteListener, OnItemClickListener updateListener) {
         this.categories = categories;
-    }
 
+        this.deleteListener = deleteListener;
+        this.updateListener = updateListener;
+    }
     @NonNull
     @Override
     public CategoryCardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -35,20 +41,34 @@ public class CategoriesAdapter extends RecyclerView.Adapter<CategoryCardViewHold
 
     @Override
     public void onBindViewHolder(@NonNull CategoryCardViewHolder holder, int position) {
-        if(categories!=null && position<categories.size())
-        {
+        if (categories != null && position < categories.size()) {
             CategoryItemDTO item = categories.get(position);
             holder.getCategoryName().setText(item.getName());
-            String url = Urls.BASE+item.getImage();
+            String url = Urls.BASE +"/images/"+ item.getImage();
             Glide.with(HomeApplication.getAppContext())
                     .load(url)
                     .apply(new RequestOptions().override(600))
                     .into(holder.getCategoryImage());
+            System.out.println("ID: "+item.getId());
+            holder.deleteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                        deleteListener.onItemClick(item);
+                }
+            });
+            holder.updateButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    updateListener.onItemClick(item);
+                }
+            });
         }
     }
 
     @Override
     public int getItemCount() {
-        return categories.size();
+       if (categories == null) return 0;
+        return  categories.size();
     }
 }

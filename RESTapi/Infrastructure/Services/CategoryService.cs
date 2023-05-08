@@ -31,6 +31,12 @@ public class CategoryService : ICategoryService
         await _categoryRepository.Delete(id);
     }
 
+    public async Task<CategoryItemVm?> GetById(int id)
+    {
+        var category = await _categoryRepository.GetById(id);
+     return   _mapper.Map<CategoryEntity, CategoryItemVm>(category);
+    }
+
     public async Task<List<CategoryItemVm>> GetAllAsync()
     {
         return _mapper.Map<List<CategoryEntity>, List<CategoryItemVm>>(_categoryRepository.Categories.ToList());
