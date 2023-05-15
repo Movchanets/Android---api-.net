@@ -1,23 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item
-        android:id="@+id/m_home"
-        android:orderInCategory="100"
-        android:title="Home"
-        app:showAsAction="never" />
-    />
-    <item android:id="@+id/m_create"
-        android:orderInCategory="101"
-        android:title="Add"
-        app:showAsAction="never" />
-    />
-    <item android:id="@+id/register"
-        android:orderInCategory="101"
-        android:title="Register"
-        app:showAsAction="never" />
-    <item android:id="@+id/login"
-        android:orderInCategory="101"
-        android:title="Login"
-        app:showAsAction="never" />
+    <group
+        android:id="@+id/group_anonimus"
+        android:visible="true">
+        <item
+            android:id="@+id/register"
+            android:orderInCategory="101"
+            android:title="Register"
+            app:showAsAction="never" />
+        <item
+            android:id="@+id/login"
+            android:orderInCategory="101"
+            android:title="Login"
+            app:showAsAction="never" />
+    </group>
+    <group
+        android:id="@+id/group_auth"
+        android:visible="false">
+        <item
+            android:id="@+id/m_home"
+            android:orderInCategory="100"
+            android:title="Home"
+            app:showAsAction="never" />
+        />
+        <item
+            android:id="@+id/m_profile"
+            android:orderInCategory="101"
+            android:title="Profile"
+            app:showAsAction="never" />
+        <item
+            android:id="@+id/m_create"
+            android:orderInCategory="101"
+            android:title="Add"
+            app:showAsAction="never" />
+        />
+        <item
+            android:id="@+id/m_logout"
+            android:orderInCategory="102"
+            android:title="Logout"
+            app:showAsAction="never" />
+    </group>
+
 </menu>

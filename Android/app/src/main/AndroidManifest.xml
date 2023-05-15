@@ -17,8 +17,20 @@
         android:theme="@style/Theme.Sim"
         tools:targetApi="31">
         <activity
-            android:name=".account.LoginActivity"
+            android:name=".account.EditProfileActivity"
             android:exported="false" />
+        <activity
+            android:name=".account.ProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".account.LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".account.RegisterActivity"
             android:exported="false" />
@@ -33,13 +45,7 @@
             android:exported="false" />
         <activity
             android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:exported="false" />
     </application>
 
 </manifest>

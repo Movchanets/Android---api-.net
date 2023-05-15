@@ -19,6 +19,8 @@ namespace DAL
             
         }
         public DbSet<CategoryEntity> Categories { get; set; }
+        
+        
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -36,6 +38,8 @@ namespace DAL
                     .HasForeignKey(u => u.UserId)
                     .IsRequired();
             });
+         
+            
         }
     }
 }

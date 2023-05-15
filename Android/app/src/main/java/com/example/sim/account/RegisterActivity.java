@@ -21,18 +21,22 @@ import com.example.sim.BaseActivity;
 import com.example.sim.ChangeImageActivity;
 import com.example.sim.MainActivity;
 import com.example.sim.R;
+import com.example.sim.application.HomeApplication;
 import com.example.sim.dto.account.LoginResponse;
 import com.example.sim.dto.account.RegisterDTO;
+import com.example.sim.dto.account.ValidationRegisterDTO;
 import com.example.sim.service.ApplicationNetwork;
 import com.example.sim.utils.CommonUtils;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Console;
 import java.io.IOException;
 
 
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -83,6 +87,15 @@ public class RegisterActivity extends BaseActivity {
                     @Override
                     public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                         Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                        String errorBody = null;
+                        try {
+                            errorBody = response.errorBody().string();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        showErrorsServer(errorBody);
+                        String token = response.body().getToken();
+                        HomeApplication.getInstance().saveJwtToken(token);
                         startActivity(intent);
                         finish();
                         CommonUtils.hideLoading();
@@ -90,13 +103,24 @@ public class RegisterActivity extends BaseActivity {
 
                     @Override
                     public void onFailure(Call<LoginResponse> call, Throwable t) {
+
                         Toast.makeText(RegisterActivity.this, "Error", Toast.LENGTH_SHORT).show();
                         System.out.println("error : " + t.getMessage());
                         CommonUtils.hideLoading();
                     }
                 });
     }
+    private void showErrorsServer(String json) {
+        Gson gson = new Gson();
+        ValidationRegisterDTO result = gson.fromJson(json, ValidationRegisterDTO.class);
+        String str="";
+        if(result.getErrors().getEmail()!=null) {
+            for (String item: result.getErrors().getEmail())
+                str+=item;
+        }
 
+        Toast.makeText(this, str, Toast.LENGTH_SHORT).show();
+    }
     private String uriGetBase64(Uri uri) {
         try {
             Bitmap bitmap = null;
