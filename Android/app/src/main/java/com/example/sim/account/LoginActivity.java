@@ -21,9 +21,11 @@ import com.example.sim.BaseActivity;
 import com.example.sim.ChangeImageActivity;
 import com.example.sim.MainActivity;
 import com.example.sim.R;
+import com.example.sim.application.HomeApplication;
 import com.example.sim.dto.account.LoginDTO;
 import com.example.sim.dto.account.LoginResponse;
 import com.example.sim.dto.account.RegisterDTO;
+import com.example.sim.security.JwtSecurityService;
 import com.example.sim.service.ApplicationNetwork;
 import com.example.sim.utils.CommonUtils;
 import com.google.android.material.textfield.TextInputEditText;
@@ -50,7 +52,7 @@ public class LoginActivity extends BaseActivity {
         setContentView(R.layout.activity_login);
         txtEmail = findViewById(R.id.txtEmail);
         txtPassword = findViewById(R.id.txtPassword);
-
+        HomeApplication.getInstance().deleteToken();
         tfEmail = findViewById(R.id.tfEmail);
         tfPassword = findViewById(R.id.tfPassword);
 
@@ -76,7 +78,7 @@ public class LoginActivity extends BaseActivity {
                             String token = response.body().getToken();
                             System.out.println("token : " + token);
                             Toast.makeText(LoginActivity.this, "Success " + token, Toast.LENGTH_SHORT).show();
-
+                            HomeApplication.getInstance().saveJwtToken(token);
                         }
                         else
                         {

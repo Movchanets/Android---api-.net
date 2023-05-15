@@ -24,7 +24,9 @@ public class JwtTokenService : IJwtTokenService
         var roles = await _userManager.GetRolesAsync(user);
         var claims = new List<Claim>()
         {
-            new Claim("name", user.Email),
+            new Claim("email", user.Email),
+            new Claim("firstName",user.FirstName),
+            new Claim("lastName",user.LastName),
             new Claim("image", user.Image??"user.jpg")
         };
         foreach(var role in roles)

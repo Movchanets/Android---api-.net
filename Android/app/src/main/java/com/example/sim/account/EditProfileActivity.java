@@ -22,6 +22,7 @@ import com.example.sim.ChangeImageActivity;
 import com.example.sim.MainActivity;
 import com.example.sim.R;
 import com.example.sim.application.HomeApplication;
+import com.example.sim.dto.account.EditAccountDTO;
 import com.example.sim.dto.account.LoginResponse;
 import com.example.sim.dto.account.RegisterDTO;
 import com.example.sim.dto.account.ValidationRegisterDTO;
@@ -41,59 +42,61 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class RegisterActivity extends BaseActivity {
+public class EditProfileActivity extends BaseActivity {
 
     private static int SELECT_IMAGE_RESULT = 300;
     Uri uri = null;
     ImageView IVPreviewImage;
     TextView tfPhoto;
-    TextInputLayout tfLastName, tfFirstName, tfEmail, tfPassword, tfConfirmPassword;
-    TextInputEditText txtLastName, txtFirstName, txtEmail, txtPassword, txtConfirmPassword;
+    TextInputLayout tfLastName, tfFirstName, tfPassword, tfConfirmPassword, tfOldPassword;
+    TextInputEditText txtLastName, txtFirstName, txtPassword, txtConfirmPassword, txtOldPassword;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register);
+        setContentView(R.layout.activity_edit_profile);
         txtLastName = findViewById(R.id.txtLastName);
         txtFirstName = findViewById(R.id.txtFirstName);
-        txtEmail = findViewById(R.id.txtEmail);
         txtPassword = findViewById(R.id.txtPassword);
         txtConfirmPassword = findViewById(R.id.txtConfirmPassword);
         IVPreviewImage = findViewById(R.id.IVPreviewImage);
         tfPhoto = findViewById(R.id.tfPhoto);
         tfLastName = findViewById(R.id.tfLastName);
         tfFirstName = findViewById(R.id.tfFirstName);
-        tfEmail = findViewById(R.id.tfEmail);
         tfPassword = findViewById(R.id.tfPassword);
         tfConfirmPassword = findViewById(R.id.tfConfirmPassword);
+        tfOldPassword = findViewById(R.id.tfOldPassword);
+        txtOldPassword = findViewById(R.id.txtOldPassword);
         setupError();
     }
 
-    public void onClickRegister(View view) {
+    public void onClickChange(View view) {
         if (!validation()) {
-          return;
+            return;
         }
-        RegisterDTO registerDTO = new RegisterDTO();
-        registerDTO.setLastName(txtLastName.getText().toString());
-        registerDTO.setFirstName(txtFirstName.getText().toString());
-        registerDTO.setEmail(txtEmail.getText().toString());
-        registerDTO.setPassword(txtPassword.getText().toString());
-        registerDTO.setConfirmPassword(txtConfirmPassword.getText().toString());
-        registerDTO.setPhoto(uriGetBase64(uri));
+        EditAccountDTO editAccountDTO = new EditAccountDTO();
+        editAccountDTO.setFirstName(txtFirstName.getText().toString());
+        editAccountDTO.setLastName(txtLastName.getText().toString());
+        editAccountDTO.setPassword(txtOldPassword.getText().toString());
+        editAccountDTO.setNewPassword(txtPassword.getText().toString());
+        String token = HomeApplication.getInstance().getToken();
+        String [] parts = token.split("\\.");
+        String payload = parts[1];
+        String payloadDecoded = new String(Base64.decode(payload, Base64.DEFAULT));
+        String [] payloadParts = payloadDecoded.split(",");
+        String email = payloadParts[0].split(":")[1];
+        editAccountDTO.setEmail(email.replace("\"", ""));
+        editAccountDTO.setImageBase64(uriGetBase64(uri));
         CommonUtils.showLoading();
         ApplicationNetwork.getInstance()
                 .getAccountApi()
-                .register(registerDTO)
+                .update(editAccountDTO)
                 .enqueue(new Callback<LoginResponse>() {
                     @Override
                     public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
-                        Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
-                        String errorBody = null;
-                        try {
-                            errorBody = response.errorBody().string();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                        showErrorsServer(errorBody);
+                        Intent intent = new Intent(EditProfileActivity.this, MainActivity.class);
+
+
                         String token = response.body().getToken();
                         HomeApplication.getInstance().saveJwtToken(token);
                         startActivity(intent);
@@ -104,23 +107,15 @@ public class RegisterActivity extends BaseActivity {
                     @Override
                     public void onFailure(Call<LoginResponse> call, Throwable t) {
 
-                        Toast.makeText(RegisterActivity.this, "Error", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditProfileActivity.this, "Error", Toast.LENGTH_SHORT).show();
                         System.out.println("error : " + t.getMessage());
                         CommonUtils.hideLoading();
                     }
                 });
     }
-    private void showErrorsServer(String json) {
-        Gson gson = new Gson();
-        ValidationRegisterDTO result = gson.fromJson(json, ValidationRegisterDTO.class);
-        String str="";
-        if(result.getErrors().getEmail()!=null) {
-            for (String item: result.getErrors().getEmail())
-                str+=item;
-        }
 
-        Toast.makeText(this, str, Toast.LENGTH_SHORT).show();
-    }
+
+
     private String uriGetBase64(Uri uri) {
         try {
             Bitmap bitmap = null;
@@ -140,78 +135,63 @@ public class RegisterActivity extends BaseActivity {
     }
 
     private boolean validation() {
-        boolean isValid=true;
+        if(uri == null){
+            Toast.makeText(this, "Виберіть фото", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        boolean isValid = true;
         String name = txtFirstName.getText().toString();
         String lastName = txtLastName.getText().toString();
-        String email = txtEmail.getText().toString();
+        String oldPassword = txtOldPassword.getText().toString();
         String password = txtPassword.getText().toString();
         String confirmPassword = txtConfirmPassword.getText().toString();
-        if(name.isEmpty())
-        {
+        if (name.isEmpty()) {
             txtFirstName.setError("Введіть ім'я");
             isValid = false;
-        }
-        else
-        {
+        } else {
             txtFirstName.setError(null);
         }
-        if(lastName.isEmpty())
-        {
+        if (lastName.isEmpty()) {
             txtLastName.setError("Введіть прізвище");
             isValid = false;
-        }
-        else
-        {
+        } else {
             txtLastName.setError(null);
         }
-        if(email.isEmpty())
-        {
-            txtEmail.setError("Введіть email");
+        if (oldPassword.isEmpty()) {
+            txtOldPassword.setError("Введіть старий пароль");
             isValid = false;
+        } else {
+            txtOldPassword.setError(null);
         }
-        else
-        {
-            txtEmail.setError(null);
-        }
-        if(password.isEmpty())
-        {
+        if (password.isEmpty()) {
             txtPassword.setError("Введіть пароль");
             isValid = false;
-        }
-        else
-        {
+        } else {
             txtPassword.setError(null);
         }
-        if(confirmPassword.isEmpty())
-        {
+        if (confirmPassword.isEmpty()) {
             txtConfirmPassword.setError("Підтвердіть пароль");
             isValid = false;
-        }
-        else
-        {
+        } else {
             txtConfirmPassword.setError(null);
         }
-        if(!password.equals(confirmPassword))
-        {
+        if (!password.equals(confirmPassword)) {
             txtConfirmPassword.setError("Паролі не співпадають");
             isValid = false;
-        }
-        else
-        {
+        } else {
             txtConfirmPassword.setError(null);
         }
-        if(uri == null)
-        { Toast.makeText(this, "Виберіть фото", Toast.LENGTH_SHORT).show();
+        if (uri == null) {
+            Toast.makeText(this, "Виберіть фото", Toast.LENGTH_SHORT).show();
             tfPhoto.setError("Виберіть фото");
             isValid = false;
-        }
-        else
-        {
+        } else {
             tfPhoto.setError(null);
         }
         return isValid;
 
     }
+
     private void setupError() {
         txtFirstName.addTextChangedListener(new TextWatcher() {
             @Override
@@ -221,14 +201,11 @@ public class RegisterActivity extends BaseActivity {
 
             @Override
             public void onTextChanged(CharSequence text, int i, int i1, int i2) {
-                   if(text.length() == 0)
-                    {
-                        tfFirstName.setError("Введіть ім'я");
-                    }
-                    else
-                    {
-                        tfFirstName.setError(null);
-                    }
+                if (text.length() == 0) {
+                    tfFirstName.setError("Введіть ім'я");
+                } else {
+                    tfFirstName.setError(null);
+                }
             }
 
             @Override
@@ -238,18 +215,15 @@ public class RegisterActivity extends BaseActivity {
         });
         txtLastName.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2)
-            {
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
             }
+
             @Override
             public void onTextChanged(CharSequence text, int i, int i1, int i2) {
-                if(text.length() == 0)
-                {
+                if (text.length() == 0) {
                     tfLastName.setError("Введіть прізвище");
-                }
-                else
-                {
+                } else {
                     tfLastName.setError(null);
                 }
             }
@@ -259,42 +233,20 @@ public class RegisterActivity extends BaseActivity {
 
             }
         });
-        txtEmail.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2)
-            {
 
-            }
-            @Override
-            public void onTextChanged(CharSequence text, int i, int i1, int i2) {
-                  if((!TextUtils.isEmpty(text) && !Patterns.EMAIL_ADDRESS.matcher(text).matches())){
-                    tfEmail.setError("Невірний формат email");
-                }
-                else
-                {
-                    tfEmail.setError(null);
-                }
-            }
 
-            @Override
-            public void afterTextChanged(Editable editable) {
 
-            }
-        });
         txtPassword.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2)
-            {
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
             }
+
             @Override
             public void onTextChanged(CharSequence text, int i, int i1, int i2) {
-                if(text.length() == 0)
-                {
+                if (text.length() == 0) {
                     tfPassword.setError("Введіть пароль");
-                }
-                else
-                {
+                } else {
                     tfPassword.setError(null);
                 }
             }
@@ -306,22 +258,18 @@ public class RegisterActivity extends BaseActivity {
         });
         txtConfirmPassword.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2)
-            {
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
             }
+
             @Override
             public void onTextChanged(CharSequence text, int i, int i1, int i2) {
-                if(text.length() == 0)
-                {
+                if (text.length() == 0) {
                     tfConfirmPassword.setError("Підтвердіть пароль");
                 }
-                if (text.length() != 0 && !text.toString().equals(txtPassword.getText().toString()))
-                {
+                if (text.length() != 0 && !text.toString().equals(txtPassword.getText().toString())) {
                     tfConfirmPassword.setError("Паролі не співпадають");
-                }
-                else
-                {
+                } else {
                     tfConfirmPassword.setError(null);
                 }
             }
@@ -332,6 +280,7 @@ public class RegisterActivity extends BaseActivity {
             }
         });
     }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

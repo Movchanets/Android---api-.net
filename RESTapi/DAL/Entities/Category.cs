@@ -2,6 +2,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DAL.Identity;
 
 namespace DAL.Entities;
 
@@ -14,4 +15,8 @@ public class CategoryEntity : BaseEntity<int>
     public int Priority { get; set; }
     [StringLength(4000)]
     public string Description { get; set; }
+    [ForeignKey("User")]
+    public int? UserId { get; set; }
+    public  virtual UserEntity User { get; set; }
+    
 }

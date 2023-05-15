@@ -70,6 +70,7 @@ public class HomeApplication extends Application implements JwtSecurityService {
 
     @Override
     public boolean isAuth() {
+        System.out.println("isAuth: "+getToken());
         return getToken().equals("");
 
     }
