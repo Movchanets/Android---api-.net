@@ -10,7 +10,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class JwtInterceptor implements Interceptor {
-
+    @Override
     public Response intercept(Chain chain) throws IOException {
         JwtSecurityService jwtService = (JwtSecurityService) HomeApplication.getInstance();
         String token = jwtService.getToken();

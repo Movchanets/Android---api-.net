@@ -94,10 +94,12 @@ public class RegisterActivity extends BaseActivity {
                             throw new RuntimeException(e);
                         }
                         showErrorsServer(errorBody);
+                        if(response.isSuccessful()) {
                         String token = response.body().getToken();
                         HomeApplication.getInstance().saveJwtToken(token);
                         startActivity(intent);
                         finish();
+                        }
                         CommonUtils.hideLoading();
                     }
 

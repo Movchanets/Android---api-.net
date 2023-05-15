@@ -11,6 +11,7 @@ namespace RESTapi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+
 public class AccountController : ControllerBase
 {
     private readonly IJwtTokenService _jwtTokenService;

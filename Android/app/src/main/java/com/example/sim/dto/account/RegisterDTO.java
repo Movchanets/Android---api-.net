@@ -5,7 +5,7 @@ public class RegisterDTO {
     private String firstName;
     private String lastName;
     private String email;
-    private String photo;
+    private String imageBase64;
     private String password;
     private String confirmPassword;
 
@@ -34,11 +34,11 @@ public class RegisterDTO {
     }
 
     public String getPhoto() {
-        return photo;
+        return imageBase64;
     }
 
     public void setPhoto(String photo) {
-        this.photo = photo;
+        this.imageBase64 = photo;
     }
 
     public String getPassword() {

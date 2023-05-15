@@ -1,10 +1,12 @@
 using System.Drawing;
 using AutoMapper;
 using DAL.Entities;
+using DAL.Identity;
 using DAL.Interfaces;
 using Infrastructure.Helper;
 using Infrastructure.Interfaces;
 using Infrastructure.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace Infrastructure.Services;
 
@@ -12,16 +14,19 @@ public class CategoryService : ICategoryService
 {
     private readonly ICategoryRepository _categoryRepository;
     private readonly IMapper _mapper;
+    private readonly UserManager<UserEntity> _userManager;
 
-    public CategoryService(ICategoryRepository categoryRepository, IMapper mapper)
+    public CategoryService(ICategoryRepository categoryRepository, IMapper mapper, UserManager<UserEntity> userManager)
     {
         _categoryRepository = categoryRepository;
         _mapper = mapper;
+        _userManager = userManager;
     }
 
-    public async Task Create(CreateCategoryVm model)
+    public async Task Create(CreateCategoryVm model, UserEntity user)
     {
         var category = _mapper.Map<CreateCategoryVm, CategoryEntity>(model);
+        category.UserId = user.Id;
         category.Image = ImageWorker.SaveImage(model.ImageBase64);
         await _categoryRepository.Create(category);
     }
@@ -34,17 +39,27 @@ public class CategoryService : ICategoryService
     public async Task<CategoryItemVm?> GetById(int id)
     {
         var category = await _categoryRepository.GetById(id);
-     return   _mapper.Map<CategoryEntity, CategoryItemVm>(category);
+
+        return _mapper.Map<CategoryEntity, CategoryItemVm>(category);
     }
 
-    public async Task<List<CategoryItemVm>> GetAllAsync()
+    public async Task<List<CategoryItemVm>> GetAllAsync(UserEntity user)
     {
-        return _mapper.Map<List<CategoryEntity>, List<CategoryItemVm>>(_categoryRepository.Categories.ToList());
+        List<CategoryEntity> categories;
+        var roles = await _userManager.GetRolesAsync(user);
+        if (roles.Contains("admin")){
+            categories = _categoryRepository.Categories.ToList();
+        }
+        else{
+            categories = _categoryRepository.Categories.Where(x => x.UserId == user.Id).ToList();
+        }
+        return _mapper.Map<List<CategoryEntity>, List<CategoryItemVm>>(categories);
     }
 
-    public async Task  Update(UpdateCategoryVm model)
+    public async Task Update(UpdateCategoryVm model)
     {
         var category = await _categoryRepository.GetById(model.Id);
+
         if (category != null)
         {
             if (model.ImageBase64 != null)
@@ -52,6 +67,7 @@ public class CategoryService : ICategoryService
                 ImageWorker.RemoveImage(category.Image);
                 category.Image = ImageWorker.SaveImage(model.ImageBase64);
             }
+
             category.Name = model.Name;
             category.Description = model.Description;
             category.Priority = model.Priority;
